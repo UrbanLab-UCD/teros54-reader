@@ -1,0 +1,22 @@
+Package: teros54reader
+Title: R Functions for TEROS54 Soil Sensor Data
+Version: 0.1.0
+Authors@R: person(given = "Moreen", family = "Willaredt", email = "moreenwillaredt@posteo.de", role = c("aut", "cre"))
+Description: R functions for quickly reading, parsing and visualizing soil moisture and temperature measurements with the TEROS54 probe.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 3.5.0)
+Imports: 
+    readxl,
+    dplyr,
+    tidyr,
+    ggplot2,
+    readr,
+    lubridate
+Suggests: 
+    see,
+    DT,
+    testthat,
+    knitr,
+    rmarkdown
+RoxygenNote: 7.3.2

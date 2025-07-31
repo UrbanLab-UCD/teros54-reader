@@ -1,0 +1,220 @@
+---
+title: "TEROS54 Data Processing Tutorial"
+author: "Moreen Willaredt"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{TEROS54 Data Processing Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+## Introduction
+
+This vignette demonstrates how to use the `teros54reader` package to process and visualize data from METER Group TEROS54 soil moisture and temperature sensors. The TEROS54 is a popular multi-depth soil sensor that measures volumetric water content and temperature at up to 4 depths per sensor.
+
+## Package Overview
+
+The `teros54reader` package provides:
+
+- **Data processing**: Read and parse TEROS54 Excel files
+- **Data visualization**: Multiple plotting functions for different analysis needs
+- **Quality control**: Built-in data validation and cleaning
+
+## Loading the Package
+
+```{r}
+library(teros54reader)
+```
+
+## Reading TEROS54 Data
+
+The main function `process_sensor_data()` reads Excel files from TEROS54 dataloggers and converts them into a clean, analysis-ready format.
+
+```{r}
+# Get path to sample data included with package
+sample_file <- system.file("extdata", "sample_teros54_data.xlsx", package = "teros54reader")
+
+# Process the data
+soil_data <- process_sensor_data(sample_file, verbose = TRUE)
+
+# View the structure
+str(soil_data)
+```
+
+```{r}
+# First few rows of data
+head(soil_data)
+```
+
+The processed data contains:
+- `time`: Timestamp of measurements
+- `wc`: Volumetric water content (m³/m³)
+- `temp`: Soil temperature (°C)
+- `depth`: Measurement depth (cm)
+- `sensor_id`: Sensor identifier (Port 1, Port 2, etc.)
+- `wc_valid`, `temp_valid`: Data quality flags
+
+## Basic Data Exploration
+
+```{r}
+# Summary of the data
+summary(soil_data)
+```
+
+```{r}
+# Number of sensors and measurements
+cat("Number of sensors:", length(unique(soil_data$sensor_id)), "\n")
+cat("Number of measurements per sensor:", table(soil_data$sensor_id), "\n")
+cat("Measurement depths:", levels(soil_data$depth), "cm\n")
+cat("Time range:", format(range(soil_data$time), "%Y-%m-%d %H:%M"), "\n")
+```
+
+## Water Content Visualization
+
+### Time Series Plots
+
+```{r}
+# Plot water content time series for all sensors
+plot_water_content(soil_data, title = "Sample Site Water Content")
+```
+
+```{r}
+# Plot specific sensors with custom layout
+plot_water_content(soil_data, 
+                  sensors = c("Port 1", "Port 2"), 
+                  ncol = 2,
+                  title = "Comparison of Port 1 and Port 2")
+```
+
+### Soil Profile Plots
+
+```{r}
+# Water content profiles at recent time points
+plot_soil_profile(soil_data, plot_var = "wc")
+```
+
+## Temperature Visualization
+
+```{r}
+# Plot temperature time series
+plot_temperature(soil_data, title = "Sample Site Temperature")
+```
+
+```{r}
+# Temperature profiles
+plot_soil_profile(soil_data, plot_var = "temp")
+```
+
+## Sensor Comparison
+
+```{r}
+# Compare all sensors side by side
+compare_sensors(soil_data, plot_var = "wc")
+```
+
+```{r}
+# Compare only surface measurements
+compare_sensors(soil_data, plot_var = "temp", depths = c("15", "30"))
+```
+
+## Quick Plotting
+
+For rapid data exploration, use the `quick_plot_teros54()` function:
+
+```{r eval=FALSE}
+# Plot directly from file (both water content and temperature)
+plots <- quick_plot_teros54(sample_file)
+
+# Display water content plot
+plots$water_content
+
+# Display temperature plot  
+plots$temperature
+```
+
+```{r}
+# Just water content
+quick_plot_teros54(sample_file, plot_type = "water")
+```
+
+## Data Quality Assessment
+
+The package includes data quality flags to help identify potentially problematic measurements:
+
+```{r}
+# Check data quality
+cat("Water content data quality:\n")
+table(soil_data$wc_valid)
+
+cat("\nTemperature data quality:\n")
+table(soil_data$temp_valid)
+```
+
+```{r}
+# Filter to only valid measurements
+clean_data <- soil_data[soil_data$wc_valid & soil_data$temp_valid, ]
+cat("Rows after quality filtering:", nrow(clean_data), "of", nrow(soil_data), "\n")
+```
+
+## Advanced Analysis Examples
+
+### Daily Patterns
+
+```{r}
+# Add hour of day for pattern analysis
+soil_data$hour <- as.numeric(format(soil_data$time, "%H"))
+
+# Plot daily patterns for surface sensors (15cm depth)
+library(ggplot2)
+surface_data <- soil_data[soil_data$depth == "15", ]
+
+ggplot(surface_data, aes(x = hour, y = wc, color = sensor_id)) +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Daily Water Content Patterns (15cm depth)",
+       x = "Hour of Day",
+       y = "Water Content (m³/m³)",
+       color = "Sensor") +
+  theme_minimal()
+```
+
+### Depth Gradients
+
+```{r}
+# Calculate mean values by depth and sensor
+library(dplyr)
+depth_summary <- soil_data %>%
+  group_by(sensor_id, depth) %>%
+  summarise(
+    mean_wc = mean(wc, na.rm = TRUE),
+    mean_temp = mean(temp, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+print(depth_summary)
+```
+
+## Tips for Real Data
+
+When working with your own TEROS54 data:
+
+1. **File format**: Ensure your Excel files have the standard TEROS54 logger format
+2. **Timezone**: Use the `timezone` parameter if your data isn't in UTC
+3. **Logger data**: Set `include_logger = TRUE` if you need battery/barometer data
+4. **Quality control**: Always check the `*_valid` flags before analysis
+5. **Memory**: For large datasets, consider processing in chunks or filtering by date range
+
+## Conclusion
+
+The `teros54reader` package streamlines TEROS54 data processing and visualization, making it easy to go from raw logger files to publication-ready plots. The package handles the complex Excel parsing automatically and provides flexible visualization options for different analysis needs.
+
+For more information and updates, visit: https://github.com/UrbanLab-UCD/teros54-reader
