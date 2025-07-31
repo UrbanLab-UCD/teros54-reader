@@ -1,0 +1,160 @@
+
+# teros54-reader
+
+R functions for quickly reading, parsing and visualizing soil moisture
+and temperature measurements with the TEROS54 probe.
+
+## Overview
+
+The TEROS54 is a soil profile sensor that measures volumetric water
+content and temperature at multiple depths. This package simplifies
+working with TEROS54 data by providing functions to:
+
+- **Read and parse** Excel files downloaded from Z6 dataloggers
+- **Clean and organize** multi-sensor, multi-depth datasets  
+- **Visualize** time series and soil profiles
+- **Compare** measurements across sensors and depths
+
+## Installation
+
+``` r
+# Install from GitHub
+devtools::install_github("UrbanLab-UCD/teros54-reader")
+
+# Load the package
+library(teros54reader)
+```
+
+## Quick Start
+
+### Basic Usage
+
+``` r
+# Read and process TEROS54 data file
+soil_data <- process_sensor_data("path/to/your_teros54_file.xlsx")
+
+# Quick plot of water content time series
+plot_water_content(soil_data)
+
+# Plot temperature time series
+plot_temperature(soil_data)
+
+# Create soil profile plots
+plot_soil_profile(soil_data, plot_var = "wc")
+```
+
+### One-Command Plotting
+
+``` r
+# Plot directly from file
+quick_plot_teros54("your_teros54_file.xlsx")
+```
+
+## Data Structure
+
+The package expects Excel files with the standard TEROS54 datalogger
+format: - **Sheet 1**: “Processed Data Config 1” - Main sensor
+readings - **Sheet 2**: “Metadata” - Sensor configuration (optional) -
+**Multiple sensors**: Up to 6 TEROS54 sensors (Port 1-6) - **Multiple
+depths**: Typically 15cm, 30cm, 45cm, 60cm per sensor - **Two
+measurements**: Water content (m³/m³) and soil temperature (°C) -
+**Logger data**: Battery and barometer data (automatically handled)
+
+## Main Functions
+
+### Data Processing
+
+- `process_sensor_data()` - Read and parse TEROS54 Excel files
+
+### Visualization
+
+- `plot_water_content()` - Time series plots of soil moisture
+- `plot_temperature()` - Time series plots of soil temperature  
+- `plot_soil_profile()` - Vertical soil profile plots
+- `compare_sensors()` - Side-by-side sensor comparisons
+- `quick_plot_teros54()` - One-command plotting from file
+
+## Examples
+
+### Time Series Analysis
+
+``` r
+# Load your data
+data <- process_sensor_data("my_teros54_data.xlsx")
+
+# Plot water content for all sensors
+plot_water_content(data, title = "Site A Water Content")
+
+# Plot only specific sensors
+plot_water_content(data, sensors = c("Port 1", "Port 2"))
+
+# Customize layout
+plot_water_content(data, ncol = 2)
+```
+
+### Soil Profile Analysis
+
+``` r
+# Water content profiles at recent time points
+plot_soil_profile(data, plot_var = "wc")
+
+# Temperature profiles
+plot_soil_profile(data, plot_var = "temp")
+
+# Focus on specific sensor
+plot_soil_profile(data, plot_var = "wc", sensors = "Port 1")
+```
+
+### Sensor Comparison
+
+``` r
+# Compare all sensors side by side
+compare_sensors(data, plot_var = "wc")
+
+# Compare only surface measurements
+compare_sensors(data, plot_var = "temp", depths = c("15", "30"))
+```
+
+## Data Output
+
+The `process_sensor_data()` function returns a clean data frame with:
+
+| Column       | Description                              |
+|--------------|------------------------------------------|
+| `time`       | Timestamp (POSIXct)                      |
+| `wc`         | Volumetric water content (m³/m³)         |
+| `temp`       | Soil temperature (°C)                    |
+| `depth`      | Measurement depth (cm)                   |
+| `sensor_id`  | Sensor identifier (Port 1, Port 2, etc.) |
+| `wc_valid`   | Data quality flag for water content      |
+| `temp_valid` | Data quality flag for temperature        |
+
+## Requirements
+
+- R (\>= 3.5.0)
+- Required packages: `readxl`, `ggplot2`, `dplyr`, `tidyr`, `readr`,
+  `lubridate`
+- Optional: `see` package for colorblind-friendly plots
+
+## Contributing
+
+Contributions are welcome! Please feel free to: - Report bugs or request
+features via GitHub issues - Submit pull requests for improvements -
+Share example datasets or use cases
+
+## License
+
+MIT License - feel free to use and modify for your research and
+applications.
+
+## Citation
+
+If you use this package in your research, please cite:
+
+    Moreen Willaredt (2025). teros54-reader: R functions for TEROS54 soil sensor data. 
+    R package version 0.1.0. https://github.com/UrbanLab-UCD/teros54-reader
+
+## Acknowledgments
+
+Developed for the soil hydrology community to streamline TEROS54 data
+analysis and visualization.
